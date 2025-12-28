@@ -1,5 +1,5 @@
 #[[
-    BuildAPI.cmake
+    BuildRepoHelpers.cmake
 
     Include this file to generate build APIs for your current project.
 
@@ -15,77 +15,52 @@
          <proj>_add_attached_files
          <proj>_sync_include
          <proj>_install
+    
+    Override <proj> with BUILD_REPO_HELPERS_FUNCTION_PREFIX.
 ]] #
 
 include_guard(DIRECTORY)
 
-if(NOT DEFINED BUILD_API_FUNCTION_PREFIX)
-    set(BUILD_API_FUNCTION_PREFIX ${PROJECT_NAME})
+if(BUILD_REPO_HELPERS_FUNCTION_PREFIX)
+    set(_F ${BUILD_REPO_HELPERS_FUNCTION_PREFIX})
+else()
+    set(_F ${PROJECT_NAME})
 endif()
-
-if(NOT DEFINED BUILD_API_VARIABLE_PREFIX)
-    string(TOUPPER ${BUILD_API_VARIABLE_PREFIX} BUILD_API_VARIABLE_PREFIX)
-endif()
-
-# Internal variables
-set(_F ${BUILD_API_FUNCTION_PREFIX})
-set(_V ${BUILD_API_VARIABLE_PREFIX})
-
-qm_import(Filesystem Preprocess)
 
 #[[
     Initialize BuildAPI global configuration.
 
-    <proj>_init_buildsystem(
-        [MACOSX_BUNDLE_NAME <name>]
-        [CONSOLE_APPLICATION]
-        [WINDOWS_APPLICATION]
-        [BUILD_SHARED]
-        [BUILD_STATIC]
-        [DEVEL]
-        [NO_INSTALL]
-        [SYNC_INCLUDE_FORCE]
-        [EXPORT <name>]
-        [INCLUDE_DIR <dir>]
-        [INSTALL_NAME <name>]
-        [INSTALL_VERSION <version>]
-        [INSTALL_NAMESPACE <namespace>]
-        [INSTALL_CONFIG_TEMPLATE <path>]
-        [CONFIG_HEADER_PATH <path>]
-        [BUILD_INFO_HEADER_PATH <path>]
-        [BUILD_INFO_HEADER_PREFIX <prefix>]
+    <proj>_init_buildsystem([prefix])
 
-        [CONFIGURE_TARGET_COMMANDS <commands>...]
-    )
+    Arguments:
+        prefix: The prefix of the build API variables. If not specified, use ${PROJECT_NAME}.
 
-    Inherit variables:
-        <proj>_BUILD_SHARED: boolean
-        <proj>_BUILD_STATIC: boolean
-        <proj>_DEVEL: boolean
-        <proj>_INSTALL: boolean
+    Argument variables:
+        <proj>_MACOSX_BUNDLE_NAME: string, default: null
 
-    Defined variables:
-        <proj>_MACOSX_BUNDLE_NAME: string (nullable)
+        <proj>_WINDOWS_APPLICATION: boolean, default: false
+        <proj>_CONSOLE_APPLICATION: boolean, default: true
+        <proj>_BUILD_SHARED: boolean, default: true
+        <proj>_BUILD_STATIC: boolean, default: false
+        <proj>_DEVEL: boolean, default: false
+        <proj>_INCLUDE_DIR: string, default: null
+        <proj>_INSTALL: boolean, default: false
+        <proj>_INSTALL_NAME: string, default: ${PROJECT_NAME}
+        <proj>_INSTALL_VERSION: string, default: ${PROJECT_VERSION}
+        <proj>_INSTALL_NAMESPACE: string, default: ${<proj>_INSTALL_NAME}
+        <proj>_INSTALL_CONFIG_TEMPLATE: string, default: ${<proj>_INSTALL_NAME}Config.cmake.in
+        <proj>_EXPORT: string, default: ${PROJECT_NAME}
+        <proj>_BUILD_MAIN_DIR: string, default: ${QMSETUP_BUILD_DIR}
+        <proj>_CONFIG_HEADER_PATH: string, default: null
+        <proj>_BUILD_INFO_HEADER_PATH: string, default: null
+        <proj>_BUILD_INFO_HEADER_PREFIX: string, default: null
+        <proj>_CONFIGURE_TARGET_COMMANDS: list, default: null
 
-        <proj>_SOURCE_DIR: string
-        <proj>_PLATFORM_NAME: string
-        <proj>_PLATFORM_LOWER: string
+    Generated variables:
+        <proj>_PROJECT_NAME: string
+        <proj>_PROJECT_NAME_UPPER: string
+        <proj>_PROJECT_SOURCE_DIR: string
 
-        <proj>_WINDOWS_APPLICATION: boolean
-        <proj>_CONSOLE_APPLICATION: boolean
-        <proj>_DEVEL: boolean
-        <proj>_INSTALL: boolean
-        <proj>_EXPORT: string
-        <proj>_INCLUDE_DIR: string (nullable)
-        <proj>_INSTALL_NAME: string
-        <proj>_INSTALL_VERSION: string
-        <proj>_INSTALL_NAMESPACE: string
-        <proj>_INSTALL_CONFIG_TEMPLATE: string
-        <proj>_CONFIG_HEADER_PATH: string (nullable)
-        <proj>_BUILD_INFO_HEADER_PATH: string (nullable)
-        <proj>_BUILD_INFO_HEADER_PREFIX: string (nullable)
-
-        <proj>_BUILD_MAIN_DIR: string
         <proj>_BUILD_TEST_RUNTIME_DIR: string
         <proj>_BUILD_TEST_LIBRARY_DIR: string
         <proj>_BUILD_RUNTIME_DIR: string
@@ -106,39 +81,26 @@ qm_import(Filesystem Preprocess)
         <proj>_INSTALL_QML_DIR: string
         <proj>_INSTALL_INCLUDE_DIR: string
         <proj>_INSTALL_CMAKE_DIR: string
-
-        <proj>_CONFIGURE_TARGET_COMMANDS: list (nullable)
-
 ]] #
 macro(${_F}_init_buildsystem)
-    set(options CONSOLE_APPLICATION WINDOWS_APPLICATION DEVEL NO_INSTALL SYNC_INCLUDE_FORCE)
-    set(oneValueArgs MACOSX_BUNDLE_NAME EXPORT INCLUDE_DIR
-        INSTALL_NAME INSTALL_VERSION INSTALL_NAMESPACE INSTALL_CONFIG_TEMPLATE
-        CONFIG_HEADER_PATH BUILD_INFO_HEADER_PATH BUILD_INFO_HEADER_PREFIX
-    )
-    set(multiValueArgs CONFIGURE_TARGET_COMMANDS)
-    cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    qm_import(Filesystem Preprocess)
 
-    # Set source directory
-    set(${_V}_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+    # Set variable prefix
+    set(_prefix ${ARGV0})
 
-    # Check platform, only Windows/Macintosh/Linux is supported
-    if(APPLE)
-        set(${_V}_PLATFORM_NAME Macintosh)
-        set(${_V}_PLATFORM_LOWER mac)
-    elseif(WIN32)
-        set(${_V}_PLATFORM_NAME Windows)
-        set(${_V}_PLATFORM_LOWER win)
-    elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
-        set(LINUX true CACHE BOOL "Linux System" FORCE)
-        set(${_V}_PLATFORM_NAME Linux)
-        set(${_V}_PLATFORM_LOWER linux)
+    if(_prefix)
+        set(_V ${_prefix})
     else()
-        message(FATAL_ERROR "Unsupported System ${CMAKE_HOST_SYSTEM_NAME}!!!")
+        string(TOUPPER ${PROJECT_NAME} _V)
     endif()
 
+    # Set source directory
+    set(${_V}_PROJECT_NAME ${PROJECT_NAME})
+    string(TOUPPER ${PROJECT_NAME} ${_V}_PROJECT_NAME_UPPER)
+    set(${_V}_PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
     # Whether to build Windows/Console application
-    if(FUNC_WINDOWS_APPLICATION AND NOT FUNC_CONSOLE_APPLICATION)
+    if(${_V}_WINDOWS_APPLICATION AND NOT ${_V}_CONSOLE_APPLICATION)
         set(${_V}_WINDOWS_APPLICATION on)
         set(${_V}_CONSOLE_APPLICATION off)
     else()
@@ -147,10 +109,10 @@ macro(${_F}_init_buildsystem)
     endif()
 
     # Whether to build shared libraries
-    if(FUNC_BUILD_SHARED OR DEFINED ${_V}_BUILD_SHARED)
+    if(${_V}_BUILD_SHARED)
         set(${_V}_BUILD_SHARED on)
         set(${_V}_BUILD_STATIC off)
-    elseif(FUNC_STATIC OR DEFINED ${_V}_BUILD_STATIC)
+    elseif(${_V}_BUILD_STATIC)
         set(${_V}_BUILD_SHARED off)
         set(${_V}_BUILD_STATIC on)
     else()
@@ -164,78 +126,47 @@ macro(${_F}_init_buildsystem)
         endif()
     endif()
 
-    # Whether to install developer files
-    if(FUNC_DEVEL)
-        set(${_V}_DEVEL on)
-    elseif(NOT DEFINED ${_V}_DEVEL)
-        set(${_V}_DEVEL off)
+    # Set include directory
+    if(${_V}_INCLUDE_DIR)
+        get_filename_component(${_V}_INCLUDE_DIR ${${_V}_INCLUDE_DIR} ABSOLUTE)
     endif()
 
     # Whether to install
-    if(FUNC_NO_INSTALL)
-        set(${_V}_INSTALL off)
-    elseif(NOT DEFINED ${_V}_INSTALL)
-        set(${_V}_INSTALL on)
-    endif()
-
     if(${_V}_INSTALL)
         include(GNUInstallDirs)
         include(CMakePackageConfigHelpers)
     endif()
 
-    # Whether to force sync include files
-    if(FUNC_SYNC_INCLUDE_FORCE)
-        set(${_V}_SYNC_INCLUDE_FORCE on)
-    else()
-        set(${_V}_SYNC_INCLUDE_FORCE off)
-    endif()
-
-    # Export targets
-    if(FUNC_EXPORT)
-        set(${_V}_EXPORT ${FUNC_EXPORT})
-    else()
-        set(${_V}_EXPORT ${_F}Targets)
-    endif()
-
-    # Set include directory
-    if(FUNC_INCLUDE_DIR)
-        get_filename_component(${_V}_INCLUDE_DIR ${FUNC_INCLUDE_DIR} ABSOLUTE)
-    else()
-        set(${_V}_INCLUDE_DIR)
-    endif()
-
     # Set install name, version and namespace
-    if(FUNC_INSTALL_NAME)
-        set(${_V}_INSTALL_NAME ${FUNC_INSTALL_NAME})
-    else()
+    if(NOT ${_V}_INSTALL_NAME)
         set(${_V}_INSTALL_NAME ${PROJECT_NAME})
     endif()
 
-    if(FUNC_INSTALL_VERSION)
-        set(${_V}_INSTALL_VERSION ${FUNC_INSTALL_VERSION})
-    else()
+    if(NOT ${_V}_INSTALL_VERSION)
         set(${_V}_INSTALL_VERSION ${PROJECT_VERSION})
     endif()
 
-    if(FUNC_INSTALL_NAMESPACE)
-        set(${_V}_INSTALL_NAMESPACE ${FUNC_INSTALL_NAMESPACE})
-    else()
+    if(NOT ${_V}_INSTALL_NAMESPACE)
         set(${_V}_INSTALL_NAMESPACE ${_V}_INSTALL_NAME)
     endif()
 
     # Set install config template
-    if(FUNC_INSTALL_CONFIG_TEMPLATE)
-        set(${_V}_INSTALL_CONFIG_TEMPLATE ${FUNC_INSTALL_CONFIG_TEMPLATE})
-    else()
+    if(NOT ${_V}_INSTALL_CONFIG_TEMPLATE)
         set(${_V}_INSTALL_CONFIG_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/${${_V}_INSTALL_NAME}Config.cmake.in)
     endif()
 
-    # Set output directories
-    set(${_V}_BUILD_MAIN_DIR ${QMSETUP_BUILD_DIR})
+    # Export targets
+    if(NOT ${_V}_EXPORT)
+        set(${_V}_EXPORT ${${_V}_INSTALL_NAME}Targets)
+    endif()
 
-    if(APPLE AND FUNC_MACOSX_BUNDLE_NAME)
-        set(${_V}_MACOSX_BUNDLE_NAME ${FUNC_MACOSX_BUNDLE_NAME})
-        set(_BUILD_BASE_DIR ${${_V}_BUILD_MAIN_DIR}/${FUNC_MACOSX_BUNDLE_NAME}.app/Contents)
+    # Set output directories
+    if(NOT ${_V}_BUILD_MAIN_DIR)
+        set(${_V}_BUILD_MAIN_DIR ${QMSETUP_BUILD_DIR})
+    endif()
+
+    if(APPLE AND ${_V}_MACOSX_BUNDLE_NAME)
+        set(_BUILD_BASE_DIR ${${_V}_BUILD_MAIN_DIR}/${${_V}_MACOSX_BUNDLE_NAME}.app/Contents)
 
         set(${_V}_BUILD_TEST_RUNTIME_DIR ${${_V}_BUILD_MAIN_DIR}/bin)
         set(${_V}_BUILD_TEST_LIBRARY_DIR ${${_V}_BUILD_MAIN_DIR}/lib)
@@ -249,7 +180,7 @@ macro(${_F}_init_buildsystem)
         set(${_V}_BUILD_QML_DIR ${_BUILD_BASE_DIR}/Resources/qml)
         set(${_V}_BUILD_INCLUDE_DIR ${_INSTALL_BASE_DIR}/Resources/include)
 
-        set(_INSTALL_BASE_DIR ${FUNC_MACOSX_BUNDLE_NAME}.app/Contents)
+        set(_INSTALL_BASE_DIR ${${_V}_MACOSX_BUNDLE_NAME}.app/Contents)
         set(${_V}_INSTALL_RUNTIME_DIR ${_INSTALL_BASE_DIR}/MacOS)
         set(${_V}_INSTALL_LIBRARY_DIR ${_INSTALL_BASE_DIR}/Frameworks)
         set(${_V}_INSTALL_PLUGINS_DIR ${_INSTALL_BASE_DIR}/Plugins)
@@ -260,7 +191,6 @@ macro(${_F}_init_buildsystem)
         set(${_V}_INSTALL_INCLUDE_DIR ${_INSTALL_BASE_DIR}/Resources/include)
         set(${_V}_INSTALL_CMAKE_DIR ${_INSTALL_BASE_DIR}/Resources/lib/cmake/${${_V}_INSTALL_NAME})
     else()
-        set(${_V}_MACOSX_BUNDLE_NAME)
         set(_BUILD_BASE_DIR ${${_V}_BUILD_MAIN_DIR})
 
         set(${_V}_BUILD_TEST_RUNTIME_DIR ${_BUILD_BASE_DIR}/bin)
@@ -286,28 +216,15 @@ macro(${_F}_init_buildsystem)
         set(${_V}_INSTALL_CMAKE_DIR lib/cmake/${${_V}_INSTALL_NAME})
     endif()
 
-    if(FUNC_CONFIG_HEADER_PATH)
+    if(${_V}_CONFIG_HEADER_PATH)
         # Set definition configuration
         set(QMSETUP_DEFINITION_SCOPE DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-
-        set(${_V}_CONFIG_HEADER_PATH ${FUNC_CONFIG_HEADER_PATH})
     endif()
 
-    if(FUNC_BUILD_INFO_HEADER_PATH)
-        set(${_V}_BUILD_INFO_HEADER_PATH ${FUNC_BUILD_INFO_HEADER_PATH})
-
-        if(FUNC_BUILD_INFO_HEADER_PREFIX)
-            set(${_V}_BUILD_INFO_HEADER_PREFIX ${FUNC_BUILD_INFO_HEADER_PREFIX})
-        else()
-            set(${_V}_BUILD_INFO_HEADER_PREFIX ${_V})
+    if(${_V}_BUILD_INFO_HEADER_PATH)
+        if(NOT ${_V}_BUILD_INFO_HEADER_PREFIX)
+            set(${_V}_BUILD_INFO_HEADER_PREFIX ${${_V}_PROJECT_NAME_UPPER})
         endif()
-    endif()
-
-    # Set configure target commands
-    if(FUNC_CONFIGURE_TARGET_COMMANDS)
-        set(${_V}_CONFIGURE_TARGET_COMMANDS ${FUNC_CONFIGURE_TARGET_COMMANDS})
-    else()
-        set(${_V}_CONFIGURE_TARGET_COMMANDS)
     endif()
 endmacro()
 
@@ -318,25 +235,28 @@ endmacro()
 #]]
 macro(${_F}_finish_buildsystem)
     if(${_V}_CONFIG_HEADER_PATH)
-        set(_priv_config_file ${${_V}_BUILD_INCLUDE_DIR}/${${_V}_CONFIG_HEADER_PATH})
-        qm_generate_config(${_priv_config_file})
+        set(_config_file ${${_V}_BUILD_INCLUDE_DIR}/${${_V}_CONFIG_HEADER_PATH})
+        qm_generate_config(${_config_file} PROJECT_NAME ${${_V}_PROJECT_NAME_UPPER})
 
         if(${_V}_INSTALL AND ${_V}_DEVEL)
-            if(EXISTS ${_priv_config_file})
+            if(EXISTS ${_config_file})
                 get_filename_component(_dest ${${_V}_INSTALL_INCLUDE_DIR}/${${_V}_CONFIG_HEADER_PATH} DIRECTORY)
-                install(FILES ${_priv_config_file} DESTINATION ${_dest})
+                install(FILES ${_config_file} DESTINATION ${_dest})
             endif()
         endif()
     endif()
 
     if(${_V}_BUILD_INFO_HEADER_PATH)
-        set(_priv_build_info_file ${${_V}_BUILD_INCLUDE_DIR}/${${_V}_BUILD_INFO_HEADER_PATH})
-        qm_generate_build_info(${_priv_build_info_file} YEAR TIME PREFIX ${${_V}_BUILD_INFO_HEADER_PREFIX})
+        set(_build_info_file ${${_V}_BUILD_INCLUDE_DIR}/${${_V}_BUILD_INFO_HEADER_PATH})
+        qm_generate_build_info(${_build_info_file}
+            YEAR TIME PREFIX ${${_V}_BUILD_INFO_HEADER_PREFIX}
+            PROJECT_NAME ${${_V}_PROJECT_NAME_UPPER}
+        )
 
         if(${_V}_INSTALL AND ${_V}_DEVEL)
-            if(EXISTS ${_priv_build_info_file})
+            if(EXISTS ${_build_info_file})
                 get_filename_component(_dest ${${_V}_INSTALL_INCLUDE_DIR}/${${_V}_BUILD_INFO_HEADER_PATH} DIRECTORY)
-                install(FILES ${_priv_build_info_file} DESTINATION ${_dest})
+                install(FILES ${_build_info_file} DESTINATION ${_dest})
             endif()
         endif()
     endif()
@@ -357,10 +277,10 @@ function(${_F}_add_application _target)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    _priv_add_executable_internal(${_target} ${FUNC_UNPARSED_ARGUMENTS})
+    _repo_add_executable_internal(${_target} Application ${FUNC_UNPARSED_ARGUMENTS})
 
     # Set target properties and build output directories
-    if(${_V}_MACOSX_BUNDLE_NAME)
+    if(APPLE AND ${_V}_MACOSX_BUNDLE_NAME)
         set_target_properties(${_target} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY ${${_V}_BUILD_MAIN_DIR}
         )
@@ -386,7 +306,7 @@ function(${_F}_add_application _target)
             set(_export EXPORT ${${_V}_EXPORT})
         endif()
 
-        if(${_V}_MACOSX_BUNDLE_NAME)
+        if(APPLE AND ${_V}_MACOSX_BUNDLE_NAME)
             install(TARGETS ${_target}
                 ${_export}
                 DESTINATION . OPTIONAL
@@ -419,7 +339,7 @@ function(${_F}_add_plugin _target)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    _priv_add_library_internal(${_target} SHARED ${FUNC_UNPARSED_ARGUMENTS})
+    _repo_add_library_internal(${_target} Plugin SHARED ${FUNC_UNPARSED_ARGUMENTS})
 
     if(NOT FUNC_CATEGORY)
         set(_category ${_target})
@@ -485,7 +405,7 @@ function(${_F}_add_library _target)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     # Add library target and attach definitions
-    _priv_add_library_internal(${_target} ${FUNC_UNPARSED_ARGUMENTS})
+    _repo_add_library_internal(${_target} Library ${FUNC_UNPARSED_ARGUMENTS})
 
     # Set output directories
     if(FUNC_TEST)
@@ -529,6 +449,10 @@ function(${_F}_add_library _target)
             )
         endif()
     endif()
+
+    set_target_properties(${_target} PROPERTIES
+        ${_V}_TARGET_TYPE Library
+    )
 endfunction()
 
 #[[
@@ -548,7 +472,7 @@ function(${_F}_add_executable _target)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    _priv_add_executable_internal(${_target} ${FUNC_UNPARSED_ARGUMENTS})
+    _repo_add_executable_internal(${_target} Executable ${FUNC_UNPARSED_ARGUMENTS})
 
     if(WIN32 AND NOT FUNC_CONSOLE)
         if(FUNC_WINDOWS OR ${_V}_WINDOWS_APPLICATION)
@@ -579,6 +503,10 @@ function(${_F}_add_executable _target)
             DESTINATION ${${_V}_INSTALL_RUNTIME_DIR} OPTIONAL
         )
     endif()
+
+    set_target_properties(${_target} PROPERTIES
+        ${_V}_TARGET_TYPE Executable
+    )
 endfunction()
 
 #[[
@@ -602,7 +530,7 @@ function(${_F}_add_attached_files _target)
 
     set(_error)
     set(_result)
-    _priv_parse_copy_args("${FUNC_UNPARSED_ARGUMENTS}" _result _error)
+    _repo_parse_copy_args("${FUNC_UNPARSED_ARGUMENTS}" _result _error)
 
     if(_error)
         message(FATAL_ERROR "${_F}_add_attached_files: ${_error}")
@@ -714,7 +642,7 @@ endfunction()
 # ----------------------------------
 # BuildAPI Internal Functions
 # ----------------------------------
-macro(_priv_set_cmake_qt_autogen _val)
+macro(_repo_set_cmake_qt_autogen _val)
     set(CMAKE_AUTOMOC ${_val})
     set(CMAKE_AUTOUIC ${_val})
     set(CMAKE_AUTORCC ${_val})
@@ -723,12 +651,12 @@ endmacro()
 #[[
     Configure a target with include directories.
 
-    _priv_configure_target_internal(<target>)
+    _repo_configure_target_internal(<target>)
 
     Required variables:
         FUNC_NO_INSTALL (nullable)
 ]] #
-macro(_priv_configure_target_internal _target)
+macro(_repo_configure_target_internal _target)
     if(${_V}_INCLUDE_DIR)
         target_include_directories(${_target} PUBLIC
             $<BUILD_INTERFACE:${${_V}_INCLUDE_DIR}>
@@ -755,29 +683,32 @@ endmacro()
 #[[
     Add an executable target.
 
-    _priv_add_executable_internal(<target>
+    _repo_add_executable_internal(<target>
         [QT_AUTOGEN]
     )
 ]] #
-macro(_priv_add_executable_internal _target)
+macro(_repo_add_executable_internal _target _type)
     set(options QT_AUTOGEN)
     set(oneValueArgs)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(FUNC_QT_AUTOGEN)
-        _priv_set_cmake_qt_autogen()
+        _repo_set_cmake_qt_autogen()
     endif()
 
     add_executable(${_target})
-    _priv_configure_target_internal(${_target})
+    set_target_properties(${_target} PROPERTIES
+        ${_V}_TARGET_TYPE ${_type}
+    )
+    _repo_configure_target_internal(${_target})
     qm_configure_target(${_target} ${FUNC_UNPARSED_ARGUMENTS})
 endmacro()
 
 #[[
     Add a library target.
 
-    _priv_add_library_internal(<target>
+    _repo_add_library_internal(<target>
         [STATIC] [SHARED] [INTERFACE]
         [QT_AUTOGEN]
         [MACRO_PREFIX <prefix>]
@@ -785,14 +716,14 @@ endmacro()
         [STATIC_MACRO <name>]
     )
 ]] #
-function(_priv_add_library_internal _target)
+function(_repo_add_library_internal _target _type)
     set(options STATIC SHARED INTERFACE QT_AUTOGEN)
     set(oneValueArgs MACRO_PREFIX LIBRARY_MACRO STATIC_MACRO)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(FUNC_QT_AUTOGEN)
-        _priv_set_cmake_qt_autogen()
+        _repo_set_cmake_qt_autogen()
     endif()
 
     set(_options)
@@ -833,21 +764,25 @@ function(_priv_add_library_internal _target)
         endif()
     endif()
 
+    set_target_properties(${_target} PROPERTIES
+        ${_V}_TARGET_TYPE ${_type}
+    )
+
     if(NOT _interface)
         qm_export_defines(${_target} ${_options})
     endif()
 
-    _priv_configure_target_internal(${_target})
+    _repo_configure_target_internal(${_target})
     qm_configure_target(${_target} ${FUNC_UNPARSED_ARGUMENTS})
 endfunction()
 
 #[[
-    _priv_parse_copy_args(<args> <RESULT> <ERROR>)
+    _repo_parse_copy_args(<args> <RESULT> <ERROR>)
 
     args:   SRC <files...> DEST <dir1>
             SRC <files...> DEST <dir2> ...
 ]] #
-function(_priv_parse_copy_args _args _result _error)
+function(_repo_parse_copy_args _args _result _error)
     # State Machine
     set(_src)
     set(_dest)

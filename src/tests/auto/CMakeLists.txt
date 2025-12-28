@@ -8,7 +8,7 @@ endif()
 
 function(add_auto_test _src)
     get_filename_component(_name ${_src} NAME_WE)
-    hello_add_executable(${_name}
+    binop_add_executable(${_name} TEST
         SOURCES ${_src}
         LINKS_PRIVATE Boost::unit_test_framework
     )

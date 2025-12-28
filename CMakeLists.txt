@@ -8,25 +8,13 @@ project(binop
 )
 
 # ----------------------------------
-# Build Options
-# ----------------------------------
-option(BINOP_BUILD_SHARED "Build shared libraries" ON)
-option(BINOP_BUILD_TESTS "Build test cases" OFF)
-option(BINOP_DEVEL "Install developer files" ON)
-option(BINOP_INSTALL "Install library" ON)
-
-# ----------------------------------
-# CMake Settings
+# Global CMake Settings
 # ----------------------------------
 if(MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /manifest:no")
     set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /manifest:no")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /manifest:no")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
-
-    if(NOT DEFINED CMAKE_DEBUG_POSTFIX)
-        set(CMAKE_DEBUG_POSTFIX "d")
-    endif()
 elseif(MINGW)
     set(CMAKE_STATIC_LIBRARY_PREFIX "")
     set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -38,7 +26,6 @@ endif()
 set(BINOP_VERSION ${PROJECT_VERSION})
 set(BINOP_DESCRIPTION ${PROJECT_DESCRIPTION})
 set(BINOP_HOMEPAGE_URL ${PROJECT_HOMEPAGE_URL})
-set(BINOP_INSTALL_NAME ${PROJECT_NAME})
 set(BINOP_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------
@@ -47,7 +34,7 @@ set(BINOP_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(external)
 
 # ----------------------------------
-# Find basic dependencies
+# Initialize QMSetup (Required)
 # ----------------------------------
 find_package(qmsetup REQUIRED)
 

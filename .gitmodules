@@ -1,0 +1,3 @@
+[submodule "external/qmsetup"]
+	path = external/qmsetup
+	url = ../../stdware/qmsetup.git

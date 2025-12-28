@@ -39,3 +39,42 @@
 
 # debug information files
 *.dwo
+
+
+# ===============================
+# EXTRA IGNORED FILES
+
+# system files
+.DS_Store
+*.lnk
+
+# cache files
+.cache
+cache
+
+# natvis files
+/*.natvis
+
+# vscode
+.vscode
+build/
+build-*
+
+# jetbrains
+.idea
+cmake-build*
+
+# visual studio
+.vs
+out/
+
+# xmake
+.xmake
+
+# clangd
+/.clangd
+
+# qt-creator
+*.user
+
+# ===============================

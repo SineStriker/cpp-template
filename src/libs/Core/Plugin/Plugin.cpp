@@ -8,6 +8,7 @@
 
 namespace binop {
 
+#ifdef _WIN32
     static std::wstring getFullModuleFilePath(HMODULE hModule) {
         // https://stackoverflow.com/a/57114164/17177007
         DWORD size = MAX_PATH;
@@ -36,13 +37,15 @@ namespace binop {
         }
         return {};
     }
+#endif
 
     std::filesystem::path Plugin::path() const {
+        void *addr = const_cast<Plugin *>(this);
 #ifdef _WIN32
         HMODULE hModule = nullptr;
         if (!::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                                       GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                                  (LPCWSTR) this, &hModule)) {
+                                  (LPCWSTR) addr, &hModule)) {
             return {};
         }
         return getFullModuleFilePath(hModule);

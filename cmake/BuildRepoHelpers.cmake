@@ -178,7 +178,7 @@ macro(${_F}_init_buildsystem)
         set(${_V}_BUILD_DATA_DIR ${_BUILD_BASE_DIR}/Resources)
         set(${_V}_BUILD_DOC_DIR ${_BUILD_BASE_DIR}/Resources/doc)
         set(${_V}_BUILD_QML_DIR ${_BUILD_BASE_DIR}/Resources/qml)
-        set(${_V}_BUILD_INCLUDE_DIR ${_INSTALL_BASE_DIR}/Resources/include)
+        set(${_V}_BUILD_INCLUDE_DIR ${_BUILD_BASE_DIR}/Resources/include)
 
         set(_INSTALL_BASE_DIR ${${_V}_MACOSX_BUNDLE_NAME}.app/Contents)
         set(${_V}_INSTALL_RUNTIME_DIR ${_INSTALL_BASE_DIR}/MacOS)

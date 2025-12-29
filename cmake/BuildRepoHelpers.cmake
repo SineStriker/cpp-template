@@ -55,6 +55,7 @@ endif()
         <proj>_BUILD_INFO_HEADER_PATH: string, default: null
         <proj>_BUILD_INFO_HEADER_PREFIX: string, default: null
         <proj>_CONFIGURE_TARGET_COMMANDS: list, default: null
+        <proj>_SYNC_INCLUDE_COMMANDS: list, default: null
 
     Generated variables:
         <proj>_PROJECT_NAME: string
@@ -147,7 +148,7 @@ macro(${_F}_init_buildsystem)
     endif()
 
     if(NOT ${_V}_INSTALL_NAMESPACE)
-        set(${_V}_INSTALL_NAMESPACE ${_V}_INSTALL_NAME)
+        set(${_V}_INSTALL_NAMESPACE ${${_V}_INSTALL_NAME})
     endif()
 
     # Set install config template
@@ -277,7 +278,12 @@ function(${_F}_add_application _target)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    _repo_add_executable_internal(${_target} Application ${FUNC_UNPARSED_ARGUMENTS})
+    set(_extra_args)
+    _repo_add_executable_internal(${_target} Application _extra_args ${FUNC_UNPARSED_ARGUMENTS})
+
+    if(_extra_args)
+        cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} ${_extra_args})
+    endif()
 
     # Set target properties and build output directories
     if(APPLE AND ${_V}_MACOSX_BUNDLE_NAME)
@@ -339,7 +345,12 @@ function(${_F}_add_plugin _target)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    _repo_add_library_internal(${_target} Plugin SHARED ${FUNC_UNPARSED_ARGUMENTS})
+    set(_extra_args)
+    _repo_add_library_internal(${_target} Plugin _extra_args SHARED ${FUNC_UNPARSED_ARGUMENTS})
+
+    if(_extra_args)
+        cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} ${_extra_args})
+    endif()
 
     if(NOT FUNC_CATEGORY)
         set(_category ${_target})
@@ -404,8 +415,12 @@ function(${_F}_add_library _target)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    # Add library target and attach definitions
-    _repo_add_library_internal(${_target} Library ${FUNC_UNPARSED_ARGUMENTS})
+    set(_extra_args)
+    _repo_add_library_internal(${_target} Library _extra_args ${FUNC_UNPARSED_ARGUMENTS})
+
+    if(_extra_args)
+        cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} ${_extra_args})
+    endif()
 
     # Set output directories
     if(FUNC_TEST)
@@ -472,7 +487,12 @@ function(${_F}_add_executable _target)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    _repo_add_executable_internal(${_target} Executable ${FUNC_UNPARSED_ARGUMENTS})
+    set(_extra_args)
+    _repo_add_executable_internal(${_target} Executable _extra_args ${FUNC_UNPARSED_ARGUMENTS})
+
+    if(_extra_args)
+        cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} ${_extra_args})
+    endif()
 
     if(WIN32 AND NOT FUNC_CONSOLE)
         if(FUNC_WINDOWS OR ${_V}_WINDOWS_APPLICATION)
@@ -579,6 +599,18 @@ function(${_F}_sync_include _target)
     set(multiValueArgs OPTIONS)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    set(_extra_args)
+
+    if(${_V}_SYNC_INCLUDE_COMMANDS)
+        foreach(_cmd IN LISTS ${_V}_SYNC_INCLUDE_COMMANDS)
+            cmake_language(CALL ${_cmd} ${_target} _extra_args)
+        endforeach()
+    endif()
+
+    if(_extra_args)
+        cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} ${_extra_args})
+    endif()
+
     set(_inc_name)
     qm_set_value(_inc_name FUNC_PREFIX ${_target})
 
@@ -591,10 +623,6 @@ function(${_F}_sync_include _target)
         set(_sync_options
             INSTALL_DIR "${${_V}_INSTALL_INCLUDE_DIR}/${_inc_name}"
         )
-    endif()
-
-    if(${_V}_SYNC_INCLUDE_FORCE)
-        list(APPEND _sync_options FORCE)
     endif()
 
     # Generate a standard include directory in build directory
@@ -656,7 +684,7 @@ endmacro()
     Required variables:
         FUNC_NO_INSTALL (nullable)
 ]] #
-macro(_repo_configure_target_internal _target)
+macro(_repo_configure_target_internal _target _extra_args_ref)
     if(${_V}_INCLUDE_DIR)
         target_include_directories(${_target} PUBLIC
             $<BUILD_INTERFACE:${${_V}_INCLUDE_DIR}>
@@ -669,7 +697,7 @@ macro(_repo_configure_target_internal _target)
 
     if(${_V}_CONFIGURE_TARGET_COMMANDS)
         foreach(_cmd IN LISTS ${_V}_CONFIGURE_TARGET_COMMANDS)
-            cmake_language(CALL ${_cmd} ${_target})
+            cmake_language(CALL ${_cmd} ${_target} ${_extra_args_ref})
         endforeach()
     endif()
 
@@ -687,7 +715,7 @@ endmacro()
         [QT_AUTOGEN]
     )
 ]] #
-macro(_repo_add_executable_internal _target _type)
+function(_repo_add_executable_internal _target _type _extra_args_ref)
     set(options QT_AUTOGEN)
     set(oneValueArgs)
     set(multiValueArgs)
@@ -701,9 +729,11 @@ macro(_repo_add_executable_internal _target _type)
     set_target_properties(${_target} PROPERTIES
         ${_V}_TARGET_TYPE ${_type}
     )
-    _repo_configure_target_internal(${_target})
+    _repo_configure_target_internal(${_target} ${_extra_args_ref})
     qm_configure_target(${_target} ${FUNC_UNPARSED_ARGUMENTS})
-endmacro()
+
+    set(${_extra_args_ref} ${${_extra_args_ref}} PARENT_SCOPE)
+endfunction()
 
 #[[
     Add a library target.
@@ -716,7 +746,7 @@ endmacro()
         [STATIC_MACRO <name>]
     )
 ]] #
-function(_repo_add_library_internal _target _type)
+function(_repo_add_library_internal _target _type _extra_args_ref)
     set(options STATIC SHARED INTERFACE QT_AUTOGEN)
     set(oneValueArgs MACRO_PREFIX LIBRARY_MACRO STATIC_MACRO)
     set(multiValueArgs)
@@ -772,8 +802,10 @@ function(_repo_add_library_internal _target _type)
         qm_export_defines(${_target} ${_options})
     endif()
 
-    _repo_configure_target_internal(${_target})
+    _repo_configure_target_internal(${_target} ${_extra_args_ref})
     qm_configure_target(${_target} ${FUNC_UNPARSED_ARGUMENTS})
+
+    set(${_extra_args_ref} ${${_extra_args_ref}} PARENT_SCOPE)
 endfunction()
 
 #[[

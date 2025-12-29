@@ -20,7 +20,7 @@ set(BINOP_RC_VERSION "${PROJECT_VERSION}")
 set(BINOP_RC_DESCRIPTION "${PROJECT_DESCRIPTION}")
 set(BINOP_RC_COPYRIGHT "Copyright (c) 2025-present YouKnowWho")
 
-function(_binop_common_configure_target _target)
+function(_binop_common_configure_target _target _extra_args_ref)
     target_compile_features(${_target} PUBLIC cxx_std_17)
 
     if(WIN32)

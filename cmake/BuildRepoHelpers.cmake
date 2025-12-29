@@ -21,6 +21,8 @@
 
 include_guard(DIRECTORY)
 
+set(BUILD_REPO_HELPERS_VERSION "1")
+
 if(BUILD_REPO_HELPERS_FUNCTION_PREFIX)
     set(_F ${BUILD_REPO_HELPERS_FUNCTION_PREFIX})
 else()
@@ -455,13 +457,17 @@ function(${_F}_add_library _target)
                 ARCHIVE DESTINATION ${${_V}_INSTALL_LIBRARY_DIR}
             )
         else()
-            install(TARGETS ${_target}
-                ${_export}
-                RUNTIME DESTINATION ${${_V}_INSTALL_RUNTIME_DIR}
-                PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-                LIBRARY DESTINATION ${${_V}_INSTALL_LIBRARY_DIR}
-                PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-            )
+            get_target_property(_type ${_target} TYPE)
+
+            if(_type STREQUAL "SHARED_LIBRARY")
+                install(TARGETS ${_target}
+                    ${_export}
+                    RUNTIME DESTINATION ${${_V}_INSTALL_RUNTIME_DIR}
+                    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+                    LIBRARY DESTINATION ${${_V}_INSTALL_LIBRARY_DIR}
+                    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+                )
+            endif()
         endif()
     endif()
 
@@ -596,7 +602,7 @@ endfunction()
 function(${_F}_sync_include _target)
     set(options NO_INSTALL)
     set(oneValueArgs DIRECTORY PREFIX)
-    set(multiValueArgs OPTIONS)
+    set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     set(_extra_args)
@@ -627,7 +633,7 @@ function(${_F}_sync_include _target)
 
     # Generate a standard include directory in build directory
     qm_sync_include(${_dir} "${${_V}_BUILD_INCLUDE_DIR}/${_inc_name}" ${_sync_options}
-        ${FUNC_OPTIONS}
+        ${FUNC_UNPARSED_ARGUMENTS}
     )
 endfunction()
 

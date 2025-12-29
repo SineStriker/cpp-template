@@ -8,6 +8,14 @@ project(binop
 )
 
 # ----------------------------------
+# Project Options
+# ----------------------------------
+option(BINOP_BUILD_SHARED "Build shared libraries" ON)
+option(BINOP_BUILD_TESTS "Build test cases" OFF)
+option(BINOP_DEVEL "Install developer files" ON)
+option(BINOP_INSTALL "Install library" ON)
+
+# ----------------------------------
 # Global CMake Settings
 # ----------------------------------
 if(MSVC)
@@ -50,7 +58,5 @@ qm_init_directories()
 # Add source modules
 # ----------------------------------
 add_subdirectory(src)
-
-add_subdirectory(share)
 
 add_subdirectory(dist)

@@ -15,6 +15,8 @@ if(BINOP_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
+add_subdirectory(share)
+
 binop_install()
 
 binop_finish_buildsystem()

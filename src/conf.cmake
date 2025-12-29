@@ -1,12 +1,4 @@
 # ----------------------------------
-# Project Options
-# ----------------------------------
-option(BINOP_BUILD_SHARED "Build shared libraries" ON)
-option(BINOP_BUILD_TESTS "Build test cases" OFF)
-option(BINOP_DEVEL "Install developer files" ON)
-option(BINOP_INSTALL "Install library" ON)
-
-# ----------------------------------
 # Project Constants
 # ----------------------------------
 set(BINOP_MACOSX_BUNDLE_NAME "Binop")

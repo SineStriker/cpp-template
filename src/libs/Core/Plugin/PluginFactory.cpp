@@ -6,6 +6,7 @@
 #include <map>
 #include <unordered_set>
 #include <shared_mutex>
+#include <algorithm>
 
 #ifdef _WIN32
 #  include <Windows.h>

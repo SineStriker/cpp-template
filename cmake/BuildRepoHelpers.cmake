@@ -51,6 +51,7 @@ endif()
         <proj>_INSTALL_VERSION: string, default: ${PROJECT_VERSION}
         <proj>_INSTALL_NAMESPACE: string, default: ${<proj>_INSTALL_NAME}
         <proj>_INSTALL_CONFIG_TEMPLATE: string, default: ${<proj>_INSTALL_NAME}Config.cmake.in
+        <proj>_INSTALL_PDB: boolean, default: false
         <proj>_EXPORT: string, default: ${PROJECT_NAME}
         <proj>_BUILD_MAIN_DIR: string, default: ${QMSETUP_BUILD_DIR}
         <proj>_CONFIG_HEADER_PATH: string, default: null
@@ -272,10 +273,11 @@ endmacro()
         [QT_AUTOGEN]
         [NO_EXPORT]
         [NO_INSTALL]
+        [NO_INSTALL_PDB]
     )
 ]] #
 function(${_F}_add_application _target)
-    set(options NO_EXPORT NO_INSTALL)
+    set(options NO_EXPORT NO_INSTALL NO_INSTALL_PDB)
     set(oneValueArgs)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -327,6 +329,10 @@ function(${_F}_add_application _target)
                 PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
             )
         endif()
+
+        if(NOT FUNC_NO_INSTALL_PDB AND ${_V}_INSTALL_PDB)
+            _repo_install_pdb(${_target} ${${_V}_INSTALL_RUNTIME_DIR})
+        endif()
     endif()
 endfunction()
 
@@ -337,12 +343,13 @@ endfunction()
         [CATEGORY category]
         [QT_AUTOGEN]
         [NO_EXPORT]
-        [NO_INSTALL_ARCHIVE]
         [NO_INSTALL]
+        [NO_INSTALL_ARCHIVE]
+        [NO_INSTALL_PDB]
     )
 ]] #
 function(${_F}_add_plugin _target)
-    set(options NO_EXPORT NO_INSTALL_ARCHIVE NO_INSTALL)
+    set(options NO_EXPORT NO_INSTALL NO_INSTALL_ARCHIVE NO_INSTALL_PDB)
     set(oneValueArgs CATEGORY)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -396,6 +403,10 @@ function(${_F}_add_plugin _target)
                 PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
             )
         endif()
+
+        if(NOT FUNC_NO_INSTALL_PDB AND ${_V}_INSTALL_PDB)
+            _repo_install_pdb(${_target} ${_install_output_dir})
+        endif()
     endif()
 endfunction()
 
@@ -409,10 +420,11 @@ endfunction()
         [QT_AUTOGEN]
         [NO_EXPORT]
         [NO_INSTALL]
+        [NO_INSTALL_PDB]
     )
 ]] #
 function(${_F}_add_library _target)
-    set(options TEST NO_EXPORT NO_INSTALL)
+    set(options TEST NO_EXPORT NO_INSTALL NO_INSTALL_PDB)
     set(oneValueArgs)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -469,6 +481,10 @@ function(${_F}_add_library _target)
                 )
             endif()
         endif()
+
+        if(NOT FUNC_NO_INSTALL_PDB AND ${_V}_INSTALL_PDB)
+            _repo_install_pdb(${_target} ${${_V}_INSTALL_RUNTIME_DIR})
+        endif()
     endif()
 
     set_target_properties(${_target} PROPERTIES
@@ -485,10 +501,11 @@ endfunction()
         [CONSOLE] [WINDOWS]
         [NO_EXPORT]
         [NO_INSTALL]
+        [NO_INSTALL_PDB]
     )
 ]] #
 function(${_F}_add_executable _target)
-    set(options TEST QT_AUTOGEN NO_EXPORT NO_INSTALL CONSOLE WINDOWS)
+    set(options TEST QT_AUTOGEN CONSOLE WINDOWS NO_EXPORT NO_INSTALL NO_INSTALL_PDB)
     set(oneValueArgs)
     set(multiValueArgs)
     cmake_parse_arguments(FUNC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -528,6 +545,10 @@ function(${_F}_add_executable _target)
             ${_export}
             DESTINATION ${${_V}_INSTALL_RUNTIME_DIR} OPTIONAL
         )
+
+        if(NOT FUNC_NO_INSTALL_PDB AND ${_V}_INSTALL_PDB)
+            _repo_install_pdb(${_target} ${${_V}_INSTALL_RUNTIME_DIR})
+        endif()
     endif()
 
     set_target_properties(${_target} PROPERTIES
@@ -680,6 +701,35 @@ macro(_repo_set_cmake_qt_autogen _val)
     set(CMAKE_AUTOMOC ${_val})
     set(CMAKE_AUTOUIC ${_val})
     set(CMAKE_AUTORCC ${_val})
+endmacro()
+
+macro(_repo_install_pdb _target _dest)
+    get_target_property(_type ${_target} TYPE)
+
+    if(_type MATCHES "EXECUTABLE|SHARED_LIBRARY")
+        if(MSVC)
+            install(FILES $<TARGET_PDB_FILE:${_target}>
+                DESTINATION ${_dest} OPTIONAL
+            )
+        else()
+            install(CODE "
+                set(_bin \"${_dest}/$<TARGET_FILE_NAME:${_target}>\")
+                set(_pdb \"${_dest}/$<TARGET_FILE_NAME:${_target}>.debug\")
+                execute_process(
+                    COMMAND \"${CMAKE_OBJCOPY}\" --only-keep-debug \${_bin} \${_pdb}
+                    WORKING_DIRECTORY \"\${CMAKE_INSTALL_PREFIX}\"
+                )
+                execute_process(
+                    COMMAND \"${CMAKE_STRIP}\" --strip-debug \${_bin}
+                    WORKING_DIRECTORY \"\${CMAKE_INSTALL_PREFIX}\"
+                )
+                execute_process(
+                    COMMAND \"${CMAKE_OBJCOPY}\" --add-gnu-debuglink \${_pdb} \${_bin}
+                    WORKING_DIRECTORY \"\${CMAKE_INSTALL_PREFIX}\"
+                )
+            ")
+        endif()
+    endif()
 endmacro()
 
 #[[

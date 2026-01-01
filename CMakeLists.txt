@@ -14,7 +14,7 @@ option(BINOP_BUILD_SHARED "Build shared libraries" ON)
 option(BINOP_BUILD_TESTS "Build test cases" OFF)
 option(BINOP_DEVEL "Install developer files" ON)
 option(BINOP_INSTALL "Install library" ON)
-option(BINOP_INSTALL_PDB "Install debug database files" ON)
+option(BINOP_INSTALL_PDB "Install debug database files" OFF)
 
 # ----------------------------------
 # Global CMake Settings

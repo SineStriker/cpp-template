@@ -52,8 +52,10 @@ endif()
         <proj>_INSTALL_NAMESPACE: string, default: ${<proj>_INSTALL_NAME}
         <proj>_INSTALL_CONFIG_TEMPLATE: string, default: ${<proj>_INSTALL_NAME}Config.cmake.in
         <proj>_INSTALL_PDB: boolean, default: false
+        <proj>_INSTALL_DIR_USE_DEBUG_PREFIX: boolean, default: false
         <proj>_EXPORT: string, default: ${PROJECT_NAME}
-        <proj>_BUILD_MAIN_DIR: string, default: ${QMSETUP_BUILD_DIR}
+        <proj>_BUILD_BASE_DIR: string, default: ${QMSETUP_BUILD_DIR}
+        <proj>_INSTALL_BASE_DIR: string, default: .
         <proj>_CONFIG_HEADER_PATH: string, default: null
         <proj>_BUILD_INFO_HEADER_PATH: string, default: null
         <proj>_BUILD_INFO_HEADER_PREFIX: string, default: null
@@ -142,83 +144,88 @@ macro(${_F}_init_buildsystem)
     endif()
 
     # Set install name, version and namespace
-    if(NOT ${_V}_INSTALL_NAME)
-        set(${_V}_INSTALL_NAME ${PROJECT_NAME})
-    endif()
-
-    if(NOT ${_V}_INSTALL_VERSION)
-        set(${_V}_INSTALL_VERSION ${PROJECT_VERSION})
-    endif()
-
-    if(NOT ${_V}_INSTALL_NAMESPACE)
-        set(${_V}_INSTALL_NAMESPACE ${${_V}_INSTALL_NAME})
-    endif()
+    _repo_set_option(${_V}_INSTALL_NAME ${PROJECT_NAME})
+    _repo_set_option(${_V}_INSTALL_VERSION ${PROJECT_VERSION})
+    _repo_set_option(${_V}_INSTALL_NAMESPACE ${${_V}_INSTALL_NAME})
 
     # Set install config template
-    if(NOT ${_V}_INSTALL_CONFIG_TEMPLATE)
-        set(${_V}_INSTALL_CONFIG_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/${${_V}_INSTALL_NAME}Config.cmake.in)
-    endif()
+    _repo_set_option(${_V}_INSTALL_CONFIG_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/${${_V}_INSTALL_NAME}Config.cmake.in)
 
     # Export targets
-    if(NOT ${_V}_EXPORT)
-        set(${_V}_EXPORT ${${_V}_INSTALL_NAME}Targets)
-    endif()
+    _repo_set_option(${_V}_EXPORT ${${_V}_INSTALL_NAME}Targets)
 
     # Set output directories
-    if(NOT ${_V}_BUILD_MAIN_DIR)
-        set(${_V}_BUILD_MAIN_DIR ${QMSETUP_BUILD_DIR})
-    endif()
+    _repo_set_option(${_V}_BUILD_BASE_DIR ${QMSETUP_BUILD_DIR})
+    _repo_set_option(${_V}_INSTALL_BASE_DIR .)
 
     if(APPLE AND ${_V}_MACOSX_BUNDLE_NAME)
-        set(_BUILD_BASE_DIR ${${_V}_BUILD_MAIN_DIR}/${${_V}_MACOSX_BUNDLE_NAME}.app/Contents)
+        set(_BUILD_BASE_DIR ${${_V}_BUILD_BASE_DIR}/${${_V}_MACOSX_BUNDLE_NAME}.app/Contents)
 
-        set(${_V}_BUILD_TEST_RUNTIME_DIR ${${_V}_BUILD_MAIN_DIR}/bin)
-        set(${_V}_BUILD_TEST_LIBRARY_DIR ${${_V}_BUILD_MAIN_DIR}/lib)
+        _repo_set_option(${_V}_BUILD_TEST_RUNTIME_DIR ${${_V}_BUILD_BASE_DIR}/bin)
+        _repo_set_option(${_V}_BUILD_TEST_LIBRARY_DIR ${${_V}_BUILD_BASE_DIR}/lib)
 
-        set(${_V}_BUILD_RUNTIME_DIR ${_BUILD_BASE_DIR}/MacOS)
-        set(${_V}_BUILD_LIBRARY_DIR ${_BUILD_BASE_DIR}/Frameworks)
-        set(${_V}_BUILD_PLUGINS_DIR ${_BUILD_BASE_DIR}/Plugins)
-        set(${_V}_BUILD_SHARE_DIR ${_BUILD_BASE_DIR}/Resources)
-        set(${_V}_BUILD_DATA_DIR ${_BUILD_BASE_DIR}/Resources)
-        set(${_V}_BUILD_DOC_DIR ${_BUILD_BASE_DIR}/Resources/doc)
-        set(${_V}_BUILD_QML_DIR ${_BUILD_BASE_DIR}/Resources/qml)
-        set(${_V}_BUILD_INCLUDE_DIR ${_BUILD_BASE_DIR}/Resources/include)
+        _repo_set_option(${_V}_BUILD_RUNTIME_DIR ${_BUILD_BASE_DIR}/MacOS)
+        _repo_set_option(${_V}_BUILD_LIBRARY_DIR ${_BUILD_BASE_DIR}/Frameworks)
+        _repo_set_option(${_V}_BUILD_PLUGINS_DIR ${_BUILD_BASE_DIR}/Plugins)
+        _repo_set_option(${_V}_BUILD_SHARE_DIR ${_BUILD_BASE_DIR}/Resources)
+        _repo_set_option(${_V}_BUILD_DATA_DIR ${_BUILD_BASE_DIR}/Resources)
+        _repo_set_option(${_V}_BUILD_DOC_DIR ${_BUILD_BASE_DIR}/Resources/doc)
+        _repo_set_option(${_V}_BUILD_QML_DIR ${_BUILD_BASE_DIR}/Resources/qml)
+        _repo_set_option(${_V}_BUILD_INCLUDE_DIR ${_BUILD_BASE_DIR}/Resources/include)
 
-        set(_INSTALL_BASE_DIR ${${_V}_MACOSX_BUNDLE_NAME}.app/Contents)
-        set(${_V}_INSTALL_RUNTIME_DIR ${_INSTALL_BASE_DIR}/MacOS)
-        set(${_V}_INSTALL_LIBRARY_DIR ${_INSTALL_BASE_DIR}/Frameworks)
-        set(${_V}_INSTALL_PLUGINS_DIR ${_INSTALL_BASE_DIR}/Plugins)
-        set(${_V}_INSTALL_SHARE_DIR ${_INSTALL_BASE_DIR}/Resources)
-        set(${_V}_INSTALL_DATA_DIR ${_INSTALL_BASE_DIR}/Resources)
-        set(${_V}_INSTALL_DOC_DIR ${_INSTALL_BASE_DIR}/Resources/doc)
-        set(${_V}_INSTALL_QML_DIR ${_INSTALL_BASE_DIR}/Resources/qml)
-        set(${_V}_INSTALL_INCLUDE_DIR ${_INSTALL_BASE_DIR}/Resources/include)
-        set(${_V}_INSTALL_CMAKE_DIR ${_INSTALL_BASE_DIR}/Resources/lib/cmake/${${_V}_INSTALL_NAME})
+        set(_INSTALL_BASE_DIR ${${_V}_INSTALL_BASE_DIR}/${${_V}_MACOSX_BUNDLE_NAME}.app/Contents)
+        _repo_set_option(${_V}_INSTALL_RUNTIME_DIR ${_INSTALL_BASE_DIR}/MacOS)
+        _repo_set_option(${_V}_INSTALL_LIBRARY_DIR ${_INSTALL_BASE_DIR}/Frameworks)
+        _repo_set_option(${_V}_INSTALL_PLUGINS_DIR ${_INSTALL_BASE_DIR}/Plugins)
+        _repo_set_option(${_V}_INSTALL_SHARE_DIR ${_INSTALL_BASE_DIR}/Resources)
+        _repo_set_option(${_V}_INSTALL_DATA_DIR ${_INSTALL_BASE_DIR}/Resources)
+        _repo_set_option(${_V}_INSTALL_DOC_DIR ${_INSTALL_BASE_DIR}/Resources/doc)
+        _repo_set_option(${_V}_INSTALL_QML_DIR ${_INSTALL_BASE_DIR}/Resources/qml)
+        _repo_set_option(${_V}_INSTALL_INCLUDE_DIR ${_INSTALL_BASE_DIR}/Resources/include)
+        _repo_set_option(${_V}_INSTALL_CMAKE_DIR ${_INSTALL_BASE_DIR}/Resources/lib/cmake/${${_V}_INSTALL_NAME})
     else()
-        set(_BUILD_BASE_DIR ${${_V}_BUILD_MAIN_DIR})
+        set(_BUILD_BASE_DIR ${${_V}_BUILD_BASE_DIR})
 
-        set(${_V}_BUILD_TEST_RUNTIME_DIR ${_BUILD_BASE_DIR}/bin)
-        set(${_V}_BUILD_TEST_LIBRARY_DIR ${_BUILD_BASE_DIR}/lib)
+        _repo_set_option(${_V}_BUILD_TEST_RUNTIME_DIR ${_BUILD_BASE_DIR}/bin)
+        _repo_set_option(${_V}_BUILD_TEST_LIBRARY_DIR ${_BUILD_BASE_DIR}/lib)
 
-        set(${_V}_BUILD_RUNTIME_DIR ${_BUILD_BASE_DIR}/bin)
-        set(${_V}_BUILD_LIBRARY_DIR ${_BUILD_BASE_DIR}/lib)
-        set(${_V}_BUILD_PLUGINS_DIR ${_BUILD_BASE_DIR}/lib/${${_V}_INSTALL_NAME}/plugins)
-        set(${_V}_BUILD_SHARE_DIR ${_BUILD_BASE_DIR}/share)
-        set(${_V}_BUILD_DATA_DIR ${_BUILD_BASE_DIR}/share/${${_V}_INSTALL_NAME})
-        set(${_V}_BUILD_DOC_DIR ${_BUILD_BASE_DIR}/share/doc/${${_V}_INSTALL_NAME})
-        set(${_V}_BUILD_QML_DIR ${_BUILD_BASE_DIR}/qml)
-        set(${_V}_BUILD_INCLUDE_DIR ${_BUILD_BASE_DIR}/include)
+        _repo_set_option(${_V}_BUILD_RUNTIME_DIR ${_BUILD_BASE_DIR}/bin)
+        _repo_set_option(${_V}_BUILD_LIBRARY_DIR ${_BUILD_BASE_DIR}/lib)
+        _repo_set_option(${_V}_BUILD_PLUGINS_DIR ${_BUILD_BASE_DIR}/lib/${${_V}_INSTALL_NAME}/plugins)
+        _repo_set_option(${_V}_BUILD_SHARE_DIR ${_BUILD_BASE_DIR}/share)
+        _repo_set_option(${_V}_BUILD_DATA_DIR ${_BUILD_BASE_DIR}/share/${${_V}_INSTALL_NAME})
+        _repo_set_option(${_V}_BUILD_DOC_DIR ${_BUILD_BASE_DIR}/share/doc/${${_V}_INSTALL_NAME})
+        _repo_set_option(${_V}_BUILD_QML_DIR ${_BUILD_BASE_DIR}/qml)
+        _repo_set_option(${_V}_BUILD_INCLUDE_DIR ${_BUILD_BASE_DIR}/include)
 
-        set(${_V}_INSTALL_RUNTIME_DIR bin)
-        set(${_V}_INSTALL_LIBRARY_DIR lib)
-        set(${_V}_INSTALL_PLUGINS_DIR lib/${${_V}_INSTALL_NAME}/plugins)
-        set(${_V}_INSTALL_SHARE_DIR share)
-        set(${_V}_INSTALL_DATA_DIR share/${${_V}_INSTALL_NAME})
-        set(${_V}_INSTALL_DOC_DIR share/doc/${${_V}_INSTALL_NAME})
-        set(${_V}_INSTALL_QML_DIR qml)
-        set(${_V}_INSTALL_INCLUDE_DIR include)
-        set(${_V}_INSTALL_CMAKE_DIR lib/cmake/${${_V}_INSTALL_NAME})
+        set(_INSTALL_BASE_DIR ${${_V}_INSTALL_BASE_DIR})
+
+        if(${_V}_INSTALL_DIR_USE_DEBUG_PREFIX)
+            set(_INSTALL_BINARY_BASE_DIR ${_INSTALL_BASE_DIR}/debug)
+        else()
+            set(_INSTALL_BINARY_BASE_DIR ${_INSTALL_BASE_DIR})
+        endif()
+
+        _repo_set_option(${_V}_INSTALL_RUNTIME_DIR ${_INSTALL_BINARY_BASE_DIR}/bin)
+        _repo_set_option(${_V}_INSTALL_LIBRARY_DIR ${_INSTALL_BINARY_BASE_DIR}/lib)
+        _repo_set_option(${_V}_INSTALL_PLUGINS_DIR ${_INSTALL_BINARY_BASE_DIR}/lib/${${_V}_INSTALL_NAME}/plugins)
+        _repo_set_option(${_V}_INSTALL_SHARE_DIR ${_INSTALL_BASE_DIR}/share)
+        _repo_set_option(${_V}_INSTALL_DATA_DIR ${_INSTALL_BASE_DIR}/share/${${_V}_INSTALL_NAME})
+        _repo_set_option(${_V}_INSTALL_DOC_DIR ${_INSTALL_BASE_DIR}/share/doc/${${_V}_INSTALL_NAME})
+        _repo_set_option(${_V}_INSTALL_QML_DIR ${_INSTALL_BASE_DIR}/qml)
+        _repo_set_option(${_V}_INSTALL_INCLUDE_DIR ${_INSTALL_BASE_DIR}/include)
+        _repo_set_option(${_V}_INSTALL_CMAKE_DIR ${_INSTALL_BASE_DIR}/lib/cmake/${${_V}_INSTALL_NAME})
     endif()
+
+    _repo_normalize_path(${_V}_INSTALL_RUNTIME_DIR)
+    _repo_normalize_path(${_V}_INSTALL_LIBRARY_DIR)
+    _repo_normalize_path(${_V}_INSTALL_PLUGINS_DIR)
+    _repo_normalize_path(${_V}_INSTALL_SHARE_DIR)
+    _repo_normalize_path(${_V}_INSTALL_DATA_DIR)
+    _repo_normalize_path(${_V}_INSTALL_DOC_DIR)
+    _repo_normalize_path(${_V}_INSTALL_QML_DIR)
+    _repo_normalize_path(${_V}_INSTALL_INCLUDE_DIR)
+    _repo_normalize_path(${_V}_INSTALL_CMAKE_DIR)
 
     if(${_V}_CONFIG_HEADER_PATH)
         # Set definition configuration
@@ -226,9 +233,7 @@ macro(${_F}_init_buildsystem)
     endif()
 
     if(${_V}_BUILD_INFO_HEADER_PATH)
-        if(NOT ${_V}_BUILD_INFO_HEADER_PREFIX)
-            set(${_V}_BUILD_INFO_HEADER_PREFIX ${${_V}_PROJECT_NAME_UPPER})
-        endif()
+        _repo_set_option(${_V}_BUILD_INFO_HEADER_PREFIX ${${_V}_PROJECT_NAME_UPPER})
     endif()
 endmacro()
 
@@ -292,7 +297,7 @@ function(${_F}_add_application _target)
     # Set target properties and build output directories
     if(APPLE AND ${_V}_MACOSX_BUNDLE_NAME)
         set_target_properties(${_target} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${${_V}_BUILD_MAIN_DIR}
+            RUNTIME_OUTPUT_DIRECTORY ${${_V}_BUILD_BASE_DIR}
         )
     else()
         if(WIN32)
@@ -697,6 +702,18 @@ endfunction()
 # ----------------------------------
 # BuildAPI Internal Functions
 # ----------------------------------
+macro(_repo_set_option _key _val)
+    if(NOT ${_key})
+        set(${_key} ${_val})
+    endif()
+endmacro()
+
+macro(_repo_normalize_path _path)
+    if(${_path} MATCHES "^./(.+)")
+        set(${_path} ${CMAKE_MATCH_1})
+    endif()
+endmacro()
+
 macro(_repo_set_cmake_qt_autogen _val)
     set(CMAKE_AUTOMOC ${_val})
     set(CMAKE_AUTOUIC ${_val})

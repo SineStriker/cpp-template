@@ -13,7 +13,9 @@ set(BINOP_RC_DESCRIPTION "${PROJECT_DESCRIPTION}")
 set(BINOP_RC_COPYRIGHT "Copyright (c) 2025-present YouKnowWho")
 
 function(_binop_common_configure_target _target _extra_args_ref)
-    target_compile_features(${_target} PUBLIC cxx_std_17)
+    qm_configure_target(${_target}
+        FEATURES cxx_std_17
+    )
 
     if(WIN32)
         get_target_property(_type ${_target} BINOP_TARGET_TYPE)
@@ -43,3 +45,7 @@ set(BINOP_CONFIGURE_TARGET_COMMANDS _binop_common_configure_target)
 # Generate Build Helpers
 # ----------------------------------
 include(${BINOP_SOURCE_DIR}/cmake/BuildRepoHelpers.cmake)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(BINOP_INSTALL_DIR_USE_DEBUG_PREFIX on)
+endif()

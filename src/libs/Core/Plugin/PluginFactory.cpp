@@ -42,6 +42,27 @@ namespace binop {
 #endif
     }
 
+#if !defined(_WIN32) && !defined(__APPLE__)
+    static bool checkVersionSuffix(const std::string_view &suffix) {
+        size_t start = 0;
+        while (start < suffix.size()) {
+            size_t dotPos = suffix.find('.', start);
+            std::string_view part;
+            if (dotPos == std::string::npos) {
+                part = suffix.substr(start);
+                start = suffix.size();
+            } else {
+                part = suffix.substr(start, dotPos - start);
+                start = dotPos + 1;
+            }
+            if (!std::all_of(part.begin(), part.end(), ::isdigit)) {
+                return false;
+            }
+        }
+        return true;
+    }
+#endif
+
     class BINOP_CORE_EXPORT PluginFactory::Impl {
     public:
         explicit Impl(PluginFactory *decl);

@@ -487,8 +487,14 @@ function(${_F}_add_library _target)
             endif()
         endif()
 
+        if(WIN32)
+            set(_install_pdb_dir ${${_V}_INSTALL_RUNTIME_DIR})
+        else()
+            set(_install_pdb_dir ${${_V}_INSTALL_LIBRARY_DIR})
+        endif()
+
         if(NOT FUNC_NO_INSTALL_PDB AND ${_V}_INSTALL_PDB)
-            _repo_install_pdb(${_target} ${${_V}_INSTALL_RUNTIME_DIR})
+            _repo_install_pdb(${_target} ${_install_pdb_dir})
         endif()
     endif()
 

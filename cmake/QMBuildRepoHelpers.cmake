@@ -1,5 +1,5 @@
 #[[
-    BuildRepoHelpers.cmake
+    QMBuildRepoHelpers.cmake
 
     Include this file to generate build APIs for your current project.
 
@@ -16,15 +16,15 @@
          <proj>_sync_include
          <proj>_install
     
-    Override <proj> with BUILD_REPO_HELPERS_FUNCTION_PREFIX.
+    Override <proj> with QM_BUILD_REPO_HELPERS_FUNCTION_PREFIX.
 ]] #
 
 include_guard(DIRECTORY)
 
-set(BUILD_REPO_HELPERS_VERSION "1")
+set(QM_BUILD_REPO_HELPERS_VERSION "1")
 
-if(BUILD_REPO_HELPERS_FUNCTION_PREFIX)
-    set(_F ${BUILD_REPO_HELPERS_FUNCTION_PREFIX})
+if(QM_BUILD_REPO_HELPERS_FUNCTION_PREFIX)
+    set(_F ${QM_BUILD_REPO_HELPERS_FUNCTION_PREFIX})
 else()
     set(_F ${PROJECT_NAME})
 endif()

@@ -41,11 +41,11 @@ endfunction()
 
 set(BINOP_CONFIGURE_TARGET_COMMANDS _binop_common_configure_target)
 
-# ----------------------------------
-# Generate Build Helpers
-# ----------------------------------
-include(${BINOP_SOURCE_DIR}/cmake/BuildRepoHelpers.cmake)
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(BINOP_INSTALL_DIR_USE_DEBUG_PREFIX on)
 endif()
+
+# ----------------------------------
+# Include Build Helpers
+# ----------------------------------
+include(${BINOP_SOURCE_DIR}/cmake/QMBuildRepoHelpers.cmake)

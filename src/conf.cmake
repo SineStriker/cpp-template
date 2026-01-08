@@ -12,7 +12,7 @@ set(BINOP_RC_VERSION "${PROJECT_VERSION}")
 set(BINOP_RC_DESCRIPTION "${PROJECT_DESCRIPTION}")
 set(BINOP_RC_COPYRIGHT "Copyright (c) 2025-present YouKnowWho")
 
-function(_binop_common_configure_target _target _extra_args_ref)
+function(_binop_common_configure_target _target)
     qm_configure_target(${_target}
         FEATURES cxx_std_17
     )
@@ -39,7 +39,7 @@ function(_binop_common_configure_target _target _extra_args_ref)
     endif()
 endfunction()
 
-set(BINOP_CONFIGURE_TARGET_COMMANDS _binop_common_configure_target)
+set(BINOP_POST_CONFIGURE_COMMANDS _binop_common_configure_target)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(BINOP_INSTALL_DIR_USE_DEBUG_PREFIX on)
